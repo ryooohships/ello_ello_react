@@ -10,7 +10,13 @@
       "Bash(npx eas build:*)",
       "Bash(NODE_ENV=production eas build --platform ios --profile preview --local)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(rm:*)",
+      "Bash(pod install:*)",
+      "Bash(npx expo run:ios:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx expo install:*)",
+      "Bash(xcodebuild:*)"
     ],
     "deny": []
   }
