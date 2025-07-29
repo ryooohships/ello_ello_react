@@ -9,10 +9,8 @@ import { TwilioService } from './twilio/TwilioService';
 import { MockTwilioService } from './twilio/MockTwilioService';
 import { appConfig } from '../config/appConfig';
 import { AudioManager } from './audio/AudioManager';
-import { CallRecordingService } from './backend/CallRecordingService';
 import { VoicemailService } from './backend/VoicemailService';
 import { PushNotificationService } from './notifications/PushNotificationService';
-import { MissedCallHandler } from './notifications/MissedCallHandler';
 import LoadingScreen from '../views/components/LoadingScreen';
 
 interface ServiceProviderValue {
@@ -21,7 +19,6 @@ interface ServiceProviderValue {
   callLogService: CallLogService;
   contactsManager: ContactsManager;
   audioManager: AudioManager;
-  callRecordingService: CallRecordingService;
   voicemailService: VoicemailService;
   pushNotificationService: PushNotificationService;
   twilioService: ITwilioService;
@@ -59,7 +56,6 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
       const callLogService = new CallLogService();
       const contactsManager = new ContactsManager();
       const audioManager = new AudioManager();
-      const callRecordingService = new CallRecordingService();
       const voicemailService = new VoicemailService();
       const pushNotificationService = new PushNotificationService();
       const twilioService = appConfig.useMockTwilio ? new MockTwilioService() : new TwilioService();
@@ -67,7 +63,6 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
 
       // Initialize services
       await audioManager.initialize();
-      await callRecordingService.initialize();
       await voicemailService.initialize();
       await pushNotificationService.initialize();
 
@@ -75,7 +70,6 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
       callManager.setCallLogService(callLogService);
       callManager.setContactsManager(contactsManager);
       callManager.setAudioManager(audioManager);
-      callManager.setCallRecordingService(callRecordingService);
       callManager.setTwilioService(twilioService);
 
       // Register services with container
@@ -83,7 +77,6 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
       container.register('callLogService', callLogService);
       container.register('contactsManager', contactsManager);
       container.register('audioManager', audioManager);
-      container.register('callRecordingService', callRecordingService);
       container.register('voicemailService', voicemailService);
       container.register('pushNotificationService', pushNotificationService);
       container.register('twilioService', twilioService);
@@ -99,7 +92,6 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
         callLogService,
         contactsManager,
         audioManager,
-        callRecordingService,
         voicemailService,
         pushNotificationService,
         twilioService,
@@ -114,7 +106,6 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
       const callLogService = new CallLogService();
       const contactsManager = new ContactsManager();
       const audioManager = new AudioManager();
-      const callRecordingService = new CallRecordingService();
       const voicemailService = new VoicemailService();
       const pushNotificationService = new PushNotificationService();
       const twilioService = appConfig.useMockTwilio ? new MockTwilioService() : new TwilioService();
@@ -122,7 +113,6 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
 
       try {
         await audioManager.initialize();
-        await callRecordingService.initialize();
         await pushNotificationService.initialize();
       } catch (serviceError) {
         console.warn('Service initialization failed:', serviceError);
@@ -132,7 +122,6 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
       callManager.setCallLogService(callLogService);
       callManager.setContactsManager(contactsManager);
       callManager.setAudioManager(audioManager);
-      callManager.setCallRecordingService(callRecordingService);
       callManager.setTwilioService(twilioService);
 
       setServices({
@@ -141,7 +130,6 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
         callLogService,
         contactsManager,
         audioManager,
-        callRecordingService,
         voicemailService,
         pushNotificationService,
         twilioService,

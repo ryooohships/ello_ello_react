@@ -21,7 +21,6 @@ export interface Call {
   isIncoming: boolean;
   isMuted: boolean;
   isSpeakerOn: boolean;
-  isRecording: boolean;
   callInvite?: any; // Twilio CallInvite object for incoming calls
 }
 
@@ -31,7 +30,6 @@ export class CallManager {
   private callLogService: any; // Will be injected
   private contactsManager: any; // Will be injected
   private audioManager: any; // Will be injected
-  private callRecordingService: any; // Will be injected
   private twilioService: any; // Will be injected
 
   setCallLogService(callLogService: any) {
@@ -46,9 +44,6 @@ export class CallManager {
     this.audioManager = audioManager;
   }
 
-  setCallRecordingService(callRecordingService: any) {
-    this.callRecordingService = callRecordingService;
-  }
 
   setTwilioService(twilioService: any) {
     this.twilioService = twilioService;
@@ -235,7 +230,6 @@ export class CallManager {
       isIncoming: false,
       isMuted: false,
       isSpeakerOn: false,
-      isRecording: false,
     };
 
     this.currentCall = call;

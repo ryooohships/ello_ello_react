@@ -32,7 +32,8 @@
       "Bash(git rm:*)",
       "Bash(git push:*)",
       "Bash(npx expo:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }
