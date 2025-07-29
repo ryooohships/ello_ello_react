@@ -25,8 +25,8 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@example.com",
-        "ascAppId": "your-app-store-connect-app-id"
+        "appleId": "ryan@wattsamp.co.uk",
+        "ascAppId": "REPLACE_WITH_YOUR_ACTUAL_ASC_APP_ID"
       }
     }
   }

@@ -16,7 +16,19 @@
       "Bash(npx expo run:ios:*)",
       "Bash(npm ls:*)",
       "Bash(npx expo install:*)",
-      "Bash(xcodebuild:*)"
+      "Bash(xcodebuild:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(twilio api:chat:v2:credentials:create:*)",
+      "Bash(twilio phone-numbers:update:*)",
+      "Bash(twilio api:voice:credentials:create:*)",
+      "Bash(twilio profiles:list:*)",
+      "Bash(tar:*)",
+      "Bash(node:*)",
+      "WebFetch(domain:elloello-backend.onrender.com)",
+      "WebFetch(domain:www.twilio.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.twilio.com)"
     ],
     "deny": []
   }

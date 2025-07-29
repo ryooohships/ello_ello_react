@@ -39,12 +39,22 @@ export default function SettingsTabView() {
     transcription: true,
     darkMode: true,
   });
+  const [actualNotificationStatus, setActualNotificationStatus] = useState(false);
   
-  const { callLogService, callManager } = useServices();
+  const { callLogService, callManager, pushNotificationService } = useServices();
 
   useEffect(() => {
     loadSettings();
+    checkNotificationStatus();
   }, []);
+
+  const checkNotificationStatus = async () => {
+    const enabled = await pushNotificationService.areNotificationsEnabled();
+    setActualNotificationStatus(enabled);
+    if (!enabled) {
+      saveSetting('notifications', false);
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -59,6 +69,29 @@ export default function SettingsTabView() {
 
   const saveSetting = async (key: string, value: boolean) => {
     try {
+      // Special handling for notifications per Apple guidelines
+      if (key === 'notifications') {
+        if (value) {
+          // User wants to enable notifications
+          const hasPermission = await pushNotificationService.requestPermissions();
+          if (!hasPermission) {
+            // User denied permission - open settings
+            Alert.alert(
+              'Notifications Disabled',
+              'Please enable notifications in Settings to receive call alerts.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Open Settings', 
+                  onPress: () => Linking.openSettings() 
+                }
+              ]
+            );
+            return; // Don't save the setting
+          }
+        }
+      }
+      
       const newSettings = { ...settings, [key]: value };
       setSettings(newSettings);
       await AsyncStorage.setItem('app_settings', JSON.stringify(newSettings));
@@ -110,7 +143,6 @@ export default function SettingsTabView() {
   };
 
   const testPushNotification = async () => {
-    const { pushNotificationService } = useServices();
     try {
       await pushNotificationService.simulateMissedCallNotification('+1555987654', 'Test Missed Call');
     } catch (error) {

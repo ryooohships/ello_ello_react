@@ -1,7 +1,9 @@
-import { Voice, Call as TwilioCall, CallInvite } from '@twilio/voice-react-native-sdk';
+import { Voice, Call as TwilioCall, CallInvite, NativeModule, NativeEventType } from '@twilio/voice-react-native-sdk';
 import { HTTPClient } from '../utils/HTTPClient';
 import { TWILIO_CONFIG } from '../../config/twilio';
+import { CallKitConfiguration } from './CallKitConfiguration';
 import { ITwilioService } from './ITwilioService';
+import { Platform } from 'react-native';
 
 export class TwilioService implements ITwilioService {
   private voice: Voice | null = null;
@@ -10,6 +12,7 @@ export class TwilioService implements ITwilioService {
   private httpClient: HTTPClient;
   private userIdentity: string | null = null;
   private callListeners = new Map<string, Function>();
+  private deviceToken: string | null = null;
 
   constructor() {
     this.httpClient = new HTTPClient(TWILIO_CONFIG.BACKEND_URL);
@@ -19,8 +22,64 @@ export class TwilioService implements ITwilioService {
     try {
       this.voice = new Voice();
       
-      this.voice.on(Voice.Event.Registered, () => {
-        console.log('✅ Twilio Voice registered');
+      // CRITICAL: Initialize PushKit registry for iOS
+      // This is REQUIRED by Twilio SDK for VoIP push notifications
+      if (Platform.OS === 'ios') {
+        console.log('📱 Initializing PushKit for iOS VoIP...');
+        try {
+          // This method tells the SDK to handle PushKit automatically
+          await this.voice.initializePushRegistry();
+          console.log('✅ PushKit initialized - SDK will handle VoIP pushes');
+          
+          // Get the VoIP device token after PushKit initialization
+          try {
+            this.deviceToken = await this.voice.getDeviceToken();
+            console.log(`📱 VoIP device token retrieved: ${this.deviceToken ? 'YES' : 'NO'}`);
+            if (this.deviceToken) {
+              console.log(`📱 VoIP token length: ${this.deviceToken.length} characters`);
+              
+              // Send VoIP token to backend immediately if we have a user identity
+              if (this.userIdentity) {
+                await this.updateBackendWithDeviceToken();
+              } else {
+                console.log('📱 Will send VoIP token to backend when user identity is available');
+              }
+            }
+          } catch (tokenError) {
+            console.error('❌ Failed to get VoIP device token:', tokenError);
+            // Continue anyway - push notifications may not work but calls can still function
+          }
+        } catch (pushKitError) {
+          console.error('❌ Failed to initialize PushKit:', pushKitError);
+          // Continue anyway - the app might work without push
+        }
+      }
+      
+      // Configure CallKit for iOS
+      if (Platform.OS === 'ios') {
+        await CallKitConfiguration.configure(this.voice);
+      }
+      
+      // Set up event listeners AFTER PushKit initialization
+      
+      this.voice.on(Voice.Event.Registered, async () => {
+        console.log('✅ Twilio Voice registered successfully');
+        // NOTE: Voice.Event.Registered does NOT provide a device token parameter
+        // The device token is handled internally by the SDK via PushKit
+        
+        // Ensure we have the latest VoIP device token after registration
+        if (Platform.OS === 'ios' && !this.deviceToken) {
+          try {
+            this.deviceToken = await this.voice!.getDeviceToken();
+            console.log(`📱 VoIP device token retrieved after registration: ${this.deviceToken ? 'YES' : 'NO'}`);
+            
+            if (this.deviceToken && this.userIdentity) {
+              await this.updateBackendWithDeviceToken();
+            }
+          } catch (tokenError) {
+            console.error('❌ Failed to get VoIP device token after registration:', tokenError);
+          }
+        }
       });
       
       this.voice.on(Voice.Event.Error, (error: Error) => {
@@ -28,22 +87,43 @@ export class TwilioService implements ITwilioService {
         this.emit('error', error);
       });
 
+      // This event fires when a VoIP push is received
+      // The SDK automatically reports to CallKit before this event
       this.voice.on(Voice.Event.CallInvite, (callInvite: CallInvite) => {
+        console.log('📞 Incoming call via VoIP push from:', callInvite.from);
+        // CallKit UI is already showing at this point
         this.handleIncomingCallInvite(callInvite);
       });
 
-      this.voice.on(Voice.Event.CancelledCallInvite, (callInvite: CallInvite) => {
-        console.log('📞 Incoming call cancelled from:', callInvite.from);
-        this.emit('callCancelled', callInvite);
-      });
+      // NOTE: Voice.Event.CancelledCallInvite and Voice.Event.CallInviteNotificationTapped
+      // do not exist in @twilio/voice-react-native-sdk version 1.6.1
+      // Call cancellation is handled through CallInvite objects directly
+      // Notification taps are handled by the OS and CallKit automatically
       
-      console.log('✅ TwilioService initialized with real SDK');
+      console.log('✅ TwilioService initialized with full iOS support');
     } catch (error) {
       console.error('❌ Failed to initialize Twilio Voice:', error);
       throw error;
     }
   }
 
+
+  // Update backend with device token
+  private async updateBackendWithDeviceToken(): Promise<void> {
+    if (!this.deviceToken || !this.userIdentity) {
+      return;
+    }
+
+    try {
+      await this.httpClient.post(`/users/${this.userIdentity}/voip-token`, {
+        deviceToken: this.deviceToken,
+        platform: 'ios',
+      });
+      console.log('📱 VoIP device token sent to backend');
+    } catch (error) {
+      console.error('❌ Failed to update backend with device token:', error);
+    }
+  }
 
   // Get access token from backend
   async refreshAccessToken(identity?: string): Promise<void> {
@@ -53,11 +133,20 @@ export class TwilioService implements ITwilioService {
 
       // Try to get real token from backend
       try {
-        const response = await this.httpClient.post('/twilio/token', {
+        const payload: any = {
           identity: userIdentity,
-        });
+          platform: Platform.OS,
+        };
+        
+        // Include device token if we already have it
+        if (this.deviceToken) {
+          payload.deviceToken = this.deviceToken;
+          console.log('📱 Including existing VoIP token in access token request');
+        }
+        
+        const response = await this.httpClient.post('/twilio/token', payload);
         this.accessToken = response.token;
-        console.log('🔐 Got real access token from backend');
+        console.log('🔐 Got access token from backend');
       } catch (backendError) {
         console.warn('⚠️ Backend token request failed, using mock token:', backendError);
         this.accessToken = `mock_token_${Date.now()}`;
@@ -65,7 +154,13 @@ export class TwilioService implements ITwilioService {
       
       if (this.voice && this.accessToken) {
         await this.voice.register(this.accessToken);
-        console.log('🔐 Twilio Voice registered with access token');
+        // Device token will be provided in the Registered event
+        console.log('🔐 Registering with Twilio Voice SDK...');
+        
+        // Send VoIP device token to backend now that we have user identity
+        if (this.deviceToken && Platform.OS === 'ios') {
+          await this.updateBackendWithDeviceToken();
+        }
       }
     } catch (error) {
       console.error('❌ Failed to get access token:', error);
@@ -125,6 +220,14 @@ export class TwilioService implements ITwilioService {
   private handleIncomingCallInvite(callInvite: CallInvite): void {
     console.log('📞 Handling incoming call from:', callInvite.from);
     
+    // IMPORTANT: The Twilio Voice SDK has already reported this call to CallKit
+    // at this point. We just need to handle the UI and business logic.
+    
+    // According to Apple guidelines:
+    // 1. CallKit has already been notified (done by SDK)
+    // 2. The native incoming call UI is already showing
+    // 3. We just emit the event for our app to handle
+    
     this.emit('incomingCall', {
       callInvite,
       from: callInvite.from,
@@ -136,7 +239,9 @@ export class TwilioService implements ITwilioService {
   // Accept incoming call
   async acceptCall(callInvite: CallInvite): Promise<TwilioCall> {
     try {
-      console.log('✅ Accepting incoming call');
+      console.log('✅ Accepting incoming call via CallKit');
+      // When user taps "Accept" in the native CallKit UI,
+      // this method is called. The SDK handles CallKit state updates.
       this.currentCall = await callInvite.accept();
       this.setupCallEventListeners(this.currentCall);
       return this.currentCall;
@@ -149,7 +254,9 @@ export class TwilioService implements ITwilioService {
   // Reject incoming call
   async rejectCall(callInvite: CallInvite): Promise<void> {
     try {
-      console.log('❌ Rejecting incoming call');
+      console.log('❌ Rejecting incoming call via CallKit');
+      // When user taps "Decline" in the native CallKit UI,
+      // this method is called. The SDK handles CallKit state updates.
       await callInvite.reject();
     } catch (error) {
       console.error('❌ Failed to reject call:', error);

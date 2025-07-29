@@ -59,3 +59,12 @@ AuthKey_*.p8
 *.p12
 *.key
 *.mobileprovision
+
+# Scripts with credentials
+setup-eas-secrets.sh
+test_voip_push.js
+makeCall.js
+
+# Build artifacts
+build-*.tar.gz
+*.app/

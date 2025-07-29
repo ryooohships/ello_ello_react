@@ -12,6 +12,7 @@ import { AudioManager } from './audio/AudioManager';
 import { CallRecordingService } from './backend/CallRecordingService';
 import { VoicemailService } from './backend/VoicemailService';
 import { PushNotificationService } from './notifications/PushNotificationService';
+import { MissedCallHandler } from './notifications/MissedCallHandler';
 import LoadingScreen from '../views/components/LoadingScreen';
 
 interface ServiceProviderValue {

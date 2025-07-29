@@ -124,13 +124,16 @@ export class PushNotificationService {
         return;
       }
 
-      // For development, we'll skip getting push tokens since we don't have a real project ID
-      // In production, you would:
-      // 1. Set up an Expo project ID
-      // 2. Get the Expo push token: await Notifications.getExpoPushTokenAsync({ projectId: 'your-id' })
-      // 3. Get native tokens for APNS/FCM
-      console.log('⚠️ Skipping push token registration - no project ID configured');
-      console.log('📝 To enable push notifications: Set up Expo project ID in app.json');
+      // Get the Expo push token for regular notifications
+      const expoPushToken = await Notifications.getExpoPushTokenAsync({
+        projectId: 'b13f5170-c75c-4780-8c59-d20102569283' // Your EAS project ID
+      });
+      
+      this.deviceToken = expoPushToken.data;
+      console.log('📱 Expo Push Token:', this.deviceToken);
+      
+      // Register with backend
+      await this.registerDeviceTokenWithBackend();
     } catch (error) {
       console.error('❌ Failed to get push token:', error);
       throw error;

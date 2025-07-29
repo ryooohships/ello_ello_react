@@ -5,12 +5,16 @@
 
 echo "Setting up EAS environment variables for Ello Ello..."
 
-# Twilio secrets
-eas env:create TWILIO_AUTH_TOKEN --scope project --value "0fe7e9f201101fa6acf2168866d41e0d"
-eas env:create TWILIO_API_KEY_SECRET --scope project --value "poGhR4PO8kflPwLAwd43IlJmpYtOCgac"
+# Twilio secrets - REPLACE WITH YOUR ACTUAL VALUES
+# eas env:create TWILIO_AUTH_TOKEN --scope project --value "YOUR_ACTUAL_TWILIO_AUTH_TOKEN"
+# eas env:create TWILIO_API_KEY_SECRET --scope project --value "YOUR_ACTUAL_TWILIO_API_KEY_SECRET"
 
-# MongoDB URI (if needed by the app)
-eas env:create MONGODB_URI --scope project --value "mongodb+srv://ryoooh:Hsgn8SEoYnpzYl8T@elloello-mongodb.v4keyul.mongodb.net/?retryWrites=true&w=majority&appName=elloello-mongodb"
+# MongoDB URI - REPLACE WITH YOUR ACTUAL VALUES
+# eas env:create MONGODB_URI --scope project --value "YOUR_ACTUAL_MONGODB_URI"
+
+echo "⚠️  SECURITY WARNING: This script has been sanitized."
+echo "⚠️  You must replace the placeholder values with your actual credentials."
+echo "⚠️  Never commit real credentials to version control."
 
 echo "EAS environment variables setup complete!"
 echo ""
