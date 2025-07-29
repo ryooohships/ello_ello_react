@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Ello Ello",
+    "slug": "elloello",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#181a20"
+    },
+    "extra": {
+      "BACKEND_URL": "https://elloello-backend.onrender.com",
+      "API_VERSION": "v1",
+      "APP_ENV": "development",
+      "DEBUG_MODE": true,
+      "eas": {
+        "projectId": "b13f5170-c75c-4780-8c59-d20102569283"
+      }
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ryoooh123.elloello",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["voip", "audio", "background-processing"],
+        "NSMicrophoneUsageDescription": "This app needs microphone access to make voice calls",
+        "NSContactsUsageDescription": "This app needs access to contacts to make calls to your contacts"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.ryoooh123.elloello"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-dev-client",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#ffffff",
+          "sounds": []
+        }
+      ]
+    ],
+    "owner": "ryoooh123"
+  }
+}
