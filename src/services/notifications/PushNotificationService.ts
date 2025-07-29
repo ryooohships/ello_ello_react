@@ -2,9 +2,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { HTTPClient } from '../utils/HTTPClient';
-
-// Backend URL - matches the existing elloello-backend
-const BACKEND_URL = 'https://elloello-backend.onrender.com';
+import { TWILIO_CONFIG } from '../../config/twilio';
 
 export interface NotificationData {
   type: 'missed_call' | 'incoming_call' | 'voicemail';
@@ -19,7 +17,7 @@ export class PushNotificationService {
   private isInitialized = false;
 
   constructor() {
-    this.httpClient = new HTTPClient(BACKEND_URL);
+    this.httpClient = new HTTPClient(TWILIO_CONFIG.BACKEND_URL);
   }
 
   async initialize(): Promise<void> {

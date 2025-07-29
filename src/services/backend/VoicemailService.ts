@@ -1,6 +1,5 @@
 import { HTTPClient } from '../utils/HTTPClient';
-
-const BACKEND_URL = 'https://elloello-backend.onrender.com';
+import { TWILIO_CONFIG } from '../../config/twilio';
 
 export interface VoicemailMessage {
   id: string;
@@ -28,7 +27,7 @@ export class VoicemailService {
   private httpClient: HTTPClient;
 
   constructor() {
-    this.httpClient = new HTTPClient(BACKEND_URL);
+    this.httpClient = new HTTPClient(TWILIO_CONFIG.BACKEND_URL);
   }
 
   async initialize(): Promise<void> {
