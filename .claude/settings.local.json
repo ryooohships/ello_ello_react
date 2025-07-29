@@ -28,7 +28,11 @@
       "WebFetch(domain:elloello-backend.onrender.com)",
       "WebFetch(domain:www.twilio.com)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:docs.twilio.com)"
+      "WebFetch(domain:docs.twilio.com)",
+      "Bash(git rm:*)",
+      "Bash(git push:*)",
+      "Bash(npx expo:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": []
   }
