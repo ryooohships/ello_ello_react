@@ -56,15 +56,18 @@ export default function IncomingCallView({ call, onAccept, onDecline }: Incoming
         </View>
 
         <View style={styles.secondaryActions}>
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="chatbubble" size={24} color={Colors.textOnDark} />
-            <Text style={styles.secondaryLabel}>Message</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="notifications-off" size={24} color={Colors.textOnDark} />
-            <Text style={styles.secondaryLabel}>Remind Me</Text>
-          </TouchableOpacity>
+          <CallActionButton
+            iconName="chatbubble"
+            onPress={() => {}}
+            size="medium"
+            variant="secondary"
+          />
+          <CallActionButton
+            iconName="notifications-off"
+            onPress={() => {}}
+            size="medium"
+            variant="secondary"
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -140,14 +143,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginTop: Spacing.lg,
   },
-  secondaryButton: {
-    alignItems: 'center',
-    padding: Spacing.md,
-  },
-  secondaryLabel: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
-    marginTop: Spacing.xs,
-    textAlign: 'center',
-  },
+  
 });

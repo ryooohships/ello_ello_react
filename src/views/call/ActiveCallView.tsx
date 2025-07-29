@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { MuteToggleButton, SpeakerToggleButton, TranscriptionToggleButton } from '../components/ToggleButton';
 import { Colors, Spacing, BorderRadius, Typography } from '../../resources/theme';
 import { Call, CallState } from '../../services/managers/CallManager';
 import { PhoneNumberFormatter } from '../../utils/PhoneNumberFormatter';
@@ -14,13 +15,14 @@ interface ActiveCallViewProps {
 
 const { width } = Dimensions.get('window');
 
-export default function ActiveCallView({ 
-  call, 
-  onEndCall, 
-  onToggleMute, 
-  onToggleSpeaker 
+export default function ActiveCallView({
+  call,
+  onEndCall,
+  onToggleMute,
+  onToggleSpeaker
 }: ActiveCallViewProps) {
   const [callDuration, setCallDuration] = useState(0);
+  const [isTranscriptionActive, setIsTranscriptionActive] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -85,57 +87,32 @@ export default function ActiveCallView({
 
       <View style={styles.controlsContainer}>
         <View style={styles.controlsRow}>
-          <TouchableOpacity 
-            style={[styles.controlButton, call.isMuted && styles.activeControl]}
+          <MuteToggleButton
+            isMuted={call.isMuted}
             onPress={onToggleMute}
-          >
-            <Ionicons 
-              name={call.isMuted ? "mic-off" : "mic"} 
-              size={32} 
-              color={call.isMuted ? Colors.warning : Colors.textOnDark} 
-            />
-            <Text style={styles.controlLabel}>Mute</Text>
-          </TouchableOpacity>
+            activeColor={Colors.warning}
+          />
+          <SpeakerToggleButton
+            isSpeakerOn={call.isSpeakerOn}
+            onPress={onToggleSpeaker}
+          />
+          <TranscriptionToggleButton
+            isActive={isTranscriptionActive}
+            onPress={() => setIsTranscriptionActive(!isTranscriptionActive)}
+          />
+        </View>
 
-          <TouchableOpacity 
+        <View style={styles.endCallRow}>
+          <TouchableOpacity
             style={styles.endCallButton}
             onPress={onEndCall}
           >
-            <Ionicons 
-              name="call" 
-              size={36} 
+            <Ionicons
+              name="call"
+              size={36}
               color={Colors.buttonText}
               style={{ transform: [{ rotate: '135deg' }] }}
             />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.controlButton, call.isSpeakerOn && styles.activeControl]}
-            onPress={onToggleSpeaker}
-          >
-            <Ionicons 
-              name={call.isSpeakerOn ? "volume-high" : "volume-medium"} 
-              size={32} 
-              color={call.isSpeakerOn ? Colors.brandPrimary : Colors.textOnDark} 
-            />
-            <Text style={styles.controlLabel}>Speaker</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.secondaryControlsRow}>
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="keypad" size={24} color={Colors.textOnDark} />
-            <Text style={styles.secondaryLabel}>Keypad</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="person-add" size={24} color={Colors.textOnDark} />
-            <Text style={styles.secondaryLabel}>Add Call</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="videocam-off" size={24} color={Colors.textOnDark} />
-            <Text style={styles.secondaryLabel}>Video</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -192,24 +169,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
-  controlButton: {
-    alignItems: 'center',
+  endCallRow: {
+    flexDirection: 'row',
     justifyContent: 'center',
-    width: 80,
-    height: 80,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.cardBackground,
+    alignItems: 'center',
+    marginTop: Spacing.xl,
   },
-  activeControl: {
-    backgroundColor: Colors.darkBackground,
-  },
-  controlLabel: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
-    marginTop: Spacing.xs,
-  },
+  
   endCallButton: {
     width: 90,
     height: 90,

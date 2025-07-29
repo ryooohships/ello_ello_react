@@ -1,171 +1,9 @@
-// import { Voice, Call as TwilioCall, CallInvite } from '@twilio/voice-react-native-sdk';
+import { Voice, Call as TwilioCall, CallInvite } from '@twilio/voice-react-native-sdk';
 import { HTTPClient } from '../utils/HTTPClient';
+import { TWILIO_CONFIG } from '../../config/twilio';
+import { ITwilioService } from './ITwilioService';
 
-const BACKEND_URL = 'https://elloello-backend.onrender.com';
-
-// Mock interfaces for Expo Go development
-interface Voice {
-  on: (event: string, handler: (data?: any) => void) => void;
-  register: (token: string) => Promise<void>;
-  connect: (token: string, options: any) => Promise<TwilioCall>;
-  unregister: (token: string) => Promise<void>;
-  getAudioDevices: () => Promise<any[]>;
-  selectAudioDevice: (device: any) => Promise<void>;
-}
-
-interface TwilioCall {
-  on: (event: string, handler: (data?: any) => void) => void;
-  disconnect: () => Promise<void>;
-  mute: (muted: boolean) => Promise<void>;
-  hold: (hold: boolean) => Promise<void>;
-  sendDigits: (digits: string) => Promise<void>;
-  isMuted: () => boolean;
-  isOnHold: () => boolean;
-  getSid: () => string;
-  getState: () => string;
-  getStats: () => Promise<any>;
-}
-
-interface CallInvite {
-  from: string;
-  to: string;
-  customParameters: any;
-  accept: () => Promise<TwilioCall>;
-  reject: () => Promise<void>;
-}
-
-// Mock implementations for Expo Go
-class MockVoice implements Voice {
-  static Event = {
-    Registered: 'registered',
-    Error: 'error',
-    CallInvite: 'callInvite',
-    CancelledCallInvite: 'cancelledCallInvite',
-  };
-
-  private listeners = new Map<string, Function>();
-
-  on(event: string, handler: Function) {
-    this.listeners.set(event, handler);
-  }
-
-  async register(token: string): Promise<void> {
-    console.log('🔐 Mock: Twilio Voice registered');
-    setTimeout(() => this.emit('registered'), 1000);
-  }
-
-  async connect(token: string, options: any): Promise<TwilioCall> {
-    console.log('📞 Mock: Making call to', options.params.To);
-    const call = new MockTwilioCall();
-    setTimeout(() => call.emit('ringing'), 1000);
-    setTimeout(() => call.emit('connected'), 3000);
-    return call;
-  }
-
-  async unregister(token: string): Promise<void> {
-    console.log('🔐 Mock: Twilio Voice unregistered');
-  }
-
-  async getAudioDevices(): Promise<any[]> {
-    return [{ name: 'iPhone', type: 'builtin' }, { name: 'Speaker', type: 'speaker' }];
-  }
-
-  async selectAudioDevice(device: any): Promise<void> {
-    console.log('🔊 Mock: Selected audio device:', device.name);
-  }
-
-  private emit(event: string, data?: any) {
-    const handler = this.listeners.get(event);
-    if (handler) handler(data);
-  }
-}
-
-class MockTwilioCall implements TwilioCall {
-  static Event = {
-    Connected: 'connected',
-    Disconnected: 'disconnected',
-    ConnectFailure: 'connectFailure',
-    Reconnecting: 'reconnecting',
-    Reconnected: 'reconnected',
-    Ringing: 'ringing',
-    QualityWarningsChanged: 'qualityWarningsChanged',
-  };
-
-  private listeners = new Map<string, Function>();
-  private muted = false;
-  private onHold = false;
-  private callSid = `CA${Date.now()}`;
-
-  on(event: string, handler: Function) {
-    this.listeners.set(event, handler);
-  }
-
-  async disconnect(): Promise<void> {
-    console.log('📞 Mock: Call disconnected');
-    this.emit('disconnected');
-  }
-
-  async mute(muted: boolean): Promise<void> {
-    this.muted = muted;
-    console.log(`🔇 Mock: Call ${muted ? 'muted' : 'unmuted'}`);
-  }
-
-  async hold(hold: boolean): Promise<void> {
-    this.onHold = hold;
-    console.log(`⏸️ Mock: Call ${hold ? 'held' : 'resumed'}`);
-  }
-
-  async sendDigits(digits: string): Promise<void> {
-    console.log('📱 Mock: Sent DTMF digits:', digits);
-  }
-
-  isMuted(): boolean {
-    return this.muted;
-  }
-
-  isOnHold(): boolean {
-    return this.onHold;
-  }
-
-  getSid(): string {
-    return this.callSid;
-  }
-
-  getState(): string {
-    return 'connected';
-  }
-
-  async getStats(): Promise<any> {
-    return { audioLevel: -30, jitter: 5, rtt: 120 };
-  }
-
-  emit(event: string, data?: any) {
-    const handler = this.listeners.get(event);
-    if (handler) handler(data);
-  }
-}
-
-class MockCallInvite implements CallInvite {
-  constructor(public from: string, public to: string, public customParameters: any = {}) {}
-
-  async accept(): Promise<TwilioCall> {
-    console.log('✅ Mock: Accepting call from', this.from);
-    const call = new MockTwilioCall();
-    setTimeout(() => call.emit('connected'), 1000);
-    return call;
-  }
-
-  async reject(): Promise<void> {
-    console.log('❌ Mock: Rejecting call from', this.from);
-  }
-}
-
-// Use mock for Expo Go, real SDK for development build
-const Voice = MockVoice;
-const TwilioCall = MockTwilioCall;  
-const CallInvite = MockCallInvite;
-
-export class TwilioService {
+export class TwilioService implements ITwilioService {
   private voice: Voice | null = null;
   private currentCall: TwilioCall | null = null;
   private accessToken: string | null = null;
@@ -174,56 +12,56 @@ export class TwilioService {
   private callListeners = new Map<string, Function>();
 
   constructor() {
-    this.httpClient = new HTTPClient();
-    this.httpClient.setBaseURL(BACKEND_URL);
+    this.httpClient = new HTTPClient(TWILIO_CONFIG.BACKEND_URL);
   }
 
   async initialize(): Promise<void> {
     try {
-      // Initialize Voice SDK
       this.voice = new Voice();
       
-      // Set up core Voice event listeners
       this.voice.on(Voice.Event.Registered, () => {
-        console.log('✅ Twilio Voice registered successfully');
+        console.log('✅ Twilio Voice registered');
       });
-
-      this.voice.on(Voice.Event.Error, (error) => {
+      
+      this.voice.on(Voice.Event.Error, (error: Error) => {
         console.error('❌ Twilio Voice error:', error);
         this.emit('error', error);
       });
 
       this.voice.on(Voice.Event.CallInvite, (callInvite: CallInvite) => {
-        console.log('📞 Incoming call invite:', callInvite);
         this.handleIncomingCallInvite(callInvite);
       });
 
-      this.voice.on(Voice.Event.CancelledCallInvite, (cancelledCallInvite) => {
-        console.log('📞 Call invite cancelled:', cancelledCallInvite);
-        this.emit('callInviteCancelled', cancelledCallInvite);
+      this.voice.on(Voice.Event.CancelledCallInvite, (callInvite: CallInvite) => {
+        console.log('📞 Incoming call cancelled from:', callInvite.from);
+        this.emit('callCancelled', callInvite);
       });
-
-      // Get initial access token from backend
-      await this.refreshAccessToken();
-
-      console.log('✅ TwilioService initialized');
+      
+      console.log('✅ TwilioService initialized with real SDK');
     } catch (error) {
       console.error('❌ Failed to initialize Twilio Voice:', error);
       throw error;
     }
   }
 
+
   // Get access token from backend
   async refreshAccessToken(identity?: string): Promise<void> {
     try {
-      const userIdentity = identity || this.userIdentity || '+1234567890'; // Mock identity
+      const userIdentity = identity || this.userIdentity || TWILIO_CONFIG.DEFAULT_IDENTITY;
       this.userIdentity = userIdentity;
 
-      const response = await this.httpClient.post('/twilio/token', {
-        identity: userIdentity,
-      });
-
-      this.accessToken = response.token;
+      // Try to get real token from backend
+      try {
+        const response = await this.httpClient.post('/twilio/token', {
+          identity: userIdentity,
+        });
+        this.accessToken = response.token;
+        console.log('🔐 Got real access token from backend');
+      } catch (backendError) {
+        console.warn('⚠️ Backend token request failed, using mock token:', backendError);
+        this.accessToken = `mock_token_${Date.now()}`;
+      }
       
       if (this.voice && this.accessToken) {
         await this.voice.register(this.accessToken);
@@ -321,42 +159,46 @@ export class TwilioService {
 
   // Setup call event listeners
   private setupCallEventListeners(call: TwilioCall): void {
-    call.on(TwilioCall.Event.Connected, () => {
+    const eventConstants = TwilioCall.Event;
+    
+    call.on(eventConstants.Connected, () => {
       console.log('✅ Call connected');
       this.emit('callConnected', call);
     });
 
-    call.on(TwilioCall.Event.Disconnected, (error) => {
+    call.on(eventConstants.Disconnected, (error: any) => {
       console.log('📞 Call disconnected:', error);
       this.emit('callDisconnected', { call, error });
       this.currentCall = null;
     });
 
-    call.on(TwilioCall.Event.ConnectFailure, (error) => {
+    call.on(eventConstants.ConnectFailure, (error: any) => {
       console.error('❌ Call failed to connect:', error);
       this.emit('callConnectFailure', { call, error });
       this.currentCall = null;
     });
 
-    call.on(TwilioCall.Event.Reconnecting, (error) => {
+    call.on(eventConstants.Reconnecting, (error: any) => {
       console.log('🔄 Call reconnecting:', error);
       this.emit('callReconnecting', { call, error });
     });
 
-    call.on(TwilioCall.Event.Reconnected, () => {
+    call.on(eventConstants.Reconnected, () => {
       console.log('✅ Call reconnected');
       this.emit('callReconnected', call);
     });
 
-    call.on(TwilioCall.Event.Ringing, () => {
+    call.on(eventConstants.Ringing, () => {
       console.log('📞 Call ringing');
       this.emit('callRinging', call);
     });
 
-    call.on(TwilioCall.Event.QualityWarningsChanged, (warnings) => {
-      console.log('⚠️ Call quality warnings:', warnings);
-      this.emit('callQualityWarnings', { call, warnings });
-    });
+    if (eventConstants.QualityWarningsChanged) {
+      call.on(eventConstants.QualityWarningsChanged, (warnings: any) => {
+        console.log('⚠️ Call quality warnings:', warnings);
+        this.emit('callQualityWarnings', { call, warnings });
+      });
+    }
   }
 
   async endCall(): Promise<void> {

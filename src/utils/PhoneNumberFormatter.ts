@@ -63,4 +63,8 @@ export class PhoneNumberFormatter {
     // Handle longer numbers
     return `+${digits.slice(0, 1)} (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 11)}`;
   }
+
+  static stripFormatting(phoneNumber: string): string {
+    return phoneNumber.replace(/\D/g, '');
+  }
 }

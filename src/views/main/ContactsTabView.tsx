@@ -30,11 +30,16 @@ export default function ContactsTabView() {
   }, []);
 
   useEffect(() => {
-    if (searchQuery.trim()) {
-      handleSearch(searchQuery);
-    } else {
-      setFilteredContacts(contacts);
-    }
+    // Debounce search for better performance
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        handleSearch(searchQuery);
+      } else {
+        setFilteredContacts(contacts);
+      }
+    }, 200); // 200ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [searchQuery, contacts]);
 
   const loadContacts = async () => {
@@ -70,14 +75,42 @@ export default function ContactsTabView() {
     }
   };
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = (query: string) => {
+    console.log('🔍 Search triggered with query:', `"${query}"`);
+    console.log('📱 Total contacts:', contacts.length);
+    
     if (!query.trim()) {
+      console.log('📝 Empty query, showing all contacts');
       setFilteredContacts(contacts);
       return;
     }
 
     try {
-      const results = await contactsManager.searchContacts(query);
+      const lowercaseQuery = query.toLowerCase().trim();
+      console.log('🔍 Searching for:', `"${lowercaseQuery}"`);
+      
+      // Simple search - just names for now
+      const results = contacts.filter(contact => {
+        if (!contact.name && !contact.displayName) return false;
+        
+        const name = (contact.name || '').toLowerCase();
+        const displayName = (contact.displayName || '').toLowerCase();
+        
+        return name.includes(lowercaseQuery) || displayName.includes(lowercaseQuery);
+      });
+      
+      console.log('💡 Simple name search results:', results.length);
+      
+      console.log('🎯 Search results:', results.length);
+      
+      // Show first few results for debugging
+      if (results.length > 0 && results.length < 10) {
+        console.log('📋 First few results:');
+        results.slice(0, 3).forEach((contact, index) => {
+          console.log(`  ${index + 1}. ${contact.displayName || contact.name} - ${contact.phoneNumber}`);
+        });
+      }
+      
       setFilteredContacts(results);
     } catch (error) {
       console.error('Search failed:', error);
@@ -165,7 +198,10 @@ export default function ContactsTabView() {
             placeholder="Search contacts"
             placeholderTextColor={Colors.textSecondary}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={(text) => {
+              console.log('🔤 Text input changed:', text);
+              setSearchQuery(text);
+            }}
           />
         </View>
       </View>

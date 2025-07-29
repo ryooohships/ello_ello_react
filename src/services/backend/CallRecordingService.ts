@@ -25,8 +25,7 @@ export class CallRecordingService {
   private static readonly CACHE_KEY = 'cached_recordings';
 
   constructor() {
-    this.httpClient = new HTTPClient();
-    this.httpClient.setBaseURL(BACKEND_URL);
+    this.httpClient = new HTTPClient(BACKEND_URL);
   }
 
   async initialize(): Promise<void> {

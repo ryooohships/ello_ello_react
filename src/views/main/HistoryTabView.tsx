@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, RefreshControl, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, BorderRadius, Typography } from '../../resources/theme';
 import { useServices } from '../../services/ServiceProvider';
@@ -9,6 +9,7 @@ import { PhoneNumberFormatter } from '../../utils/PhoneNumberFormatter';
 export default function HistoryTabView() {
   const [callHistory, setCallHistory] = useState<CallLogEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const { callLogService, callManager } = useServices();
 
   useEffect(() => {
@@ -63,6 +64,16 @@ export default function HistoryTabView() {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Filter call history based on search text
+  const filteredCallHistory = callHistory.filter(call => {
+    if (!searchText) return true;
+    const searchLower = searchText.toLowerCase();
+    return (
+      (call.displayName && call.displayName.toLowerCase().includes(searchLower)) ||
+      call.phoneNumber.includes(searchText)
+    );
+  });
   const getCallIcon = (type: CallLogEntry['type']) => {
     switch (type) {
       case 'incoming':
@@ -107,10 +118,20 @@ export default function HistoryTabView() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Recent Calls</Text>
+        <Text style={styles.headerTitle}>History</Text>
+      </View>
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color={Colors.textSecondary} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search calls"
+          placeholderTextColor={Colors.textSecondary}
+          value={searchText}
+          onChangeText={setSearchText}
+        />
       </View>
       <FlatList
-        data={callHistory}
+        data={filteredCallHistory}
         renderItem={renderCallItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
@@ -148,6 +169,24 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.semibold,
+    color: Colors.textOnDark,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: BorderRadius.medium,
+  },
+  searchIcon: {
+    marginRight: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: Typography.fontSize.md,
     color: Colors.textOnDark,
   },
   listContent: {

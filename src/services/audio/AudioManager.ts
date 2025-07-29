@@ -1,4 +1,4 @@
-import { Audio } from 'expo-audio';
+import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 
 export class AudioManager {
@@ -12,24 +12,29 @@ export class AudioManager {
     }
 
     try {
-      // Set audio mode for voice calls
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-        playThroughEarpieceAndroid: false,
-      });
+      // Try to set audio mode for voice calls, but don't fail if it doesn't work
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          staysActiveInBackground: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+        console.log('✅ Audio mode set successfully');
+      } catch (audioError) {
+        console.warn('⚠️ Could not set audio mode, continuing without it:', audioError);
+      }
 
-      // Load common sounds
-      await this.loadDialtoneSounds();
+      // Skip loading sounds for now - just use haptics
+      // await this.loadDialtoneSounds();
       
       this.isInitialized = true;
+      console.log('✅ AudioManager initialized successfully');
     } catch (error) {
       console.error('Failed to initialize AudioManager:', error);
-      throw error;
+      // Don't throw - just log and continue with limited functionality
+      this.isInitialized = true;
     }
   }
 
@@ -58,13 +63,23 @@ export class AudioManager {
 
   async playDialtone(digit: string): Promise<void> {
     try {
-      // Haptic feedback for button press
+      // Always provide haptic feedback for button press
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
       // Play dialtone sound if available
       const sound = this.dialtoneSounds[digit];
       if (sound) {
-        await sound.replayAsync();
+        await sound.setPositionAsync(0);
+        await sound.playAsync();
+      } else {
+        // Fallback: different haptic intensities for different digits
+        if (['1', '2', '3'].includes(digit)) {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } else if (['4', '5', '6'].includes(digit)) {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        } else {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        }
       }
     } catch (error) {
       console.warn('Failed to play dialtone:', error);
@@ -118,14 +133,13 @@ export class AudioManager {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
-        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
         playsInSilentModeIOS: true,
         shouldDuckAndroid: true,
-        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
         playThroughEarpieceAndroid: false,
       });
+      console.log('🔊 Speaker enabled');
     } catch (error) {
-      console.error('Failed to enable speaker:', error);
+      console.warn('Failed to enable speaker:', error);
     }
   }
 
@@ -134,14 +148,13 @@ export class AudioManager {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
-        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
         playsInSilentModeIOS: true,
         shouldDuckAndroid: true,
-        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
         playThroughEarpieceAndroid: true,
       });
+      console.log('📱 Speaker disabled (earpiece mode)');
     } catch (error) {
-      console.error('Failed to disable speaker:', error);
+      console.warn('Failed to disable speaker:', error);
     }
   }
 

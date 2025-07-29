@@ -26,9 +26,10 @@
       "bundleIdentifier": "com.ryoooh123.elloello",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["voip", "audio", "background-processing"],
         "NSMicrophoneUsageDescription": "This app needs microphone access to make voice calls",
-        "NSContactsUsageDescription": "This app needs access to contacts to make calls to your contacts"
+        "NSContactsUsageDescription": "This app needs access to contacts to make calls to your contacts",
+        "UIBackgroundModes": ["voip", "remote-notification"],
+        "com.apple.developer.pushkit.unrestricted": true
       }
     },
     "android": {
@@ -51,7 +52,8 @@
           "color": "#ffffff",
           "sounds": []
         }
-      ]
+      ],
+      "./withVoIPPushKit.js"
     ],
     "owner": "ryoooh123"
   }

@@ -389,6 +389,12 @@ export class CallManager {
     return Math.floor((now.getTime() - this.currentCall.startTime.getTime()) / 1000);
   }
 
+  // Mock call simulation for development
+  private simulateCall(): void {
+    console.log('📞 Simulating call flow');
+    // The setTimeout calls in initiateCall will handle the call progression
+  }
+
   // Development helper - simulate incoming call
   async simulateIncomingCall(phoneNumber: string = '+1234567890', displayName?: string): Promise<void> {
     const mockDisplayName = displayName || 'John Doe';

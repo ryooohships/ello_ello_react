@@ -28,8 +28,7 @@ export class VoicemailService {
   private httpClient: HTTPClient;
 
   constructor() {
-    this.httpClient = new HTTPClient();
-    this.httpClient.setBaseURL(BACKEND_URL);
+    this.httpClient = new HTTPClient(BACKEND_URL);
   }
 
   async initialize(): Promise<void> {

@@ -1,73 +1,71 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
 import { Colors } from '../../resources/theme';
 import DialpadTabView from './DialpadTabView';
 import HistoryTabView from './HistoryTabView';
 import ContactsTabView from './ContactsTabView';
 import VoicemailTabView from './VoicemailTabView';
 import SettingsTabView from './SettingsTabView';
-
-const Tab = createBottomTabNavigator();
+import CustomTabBar from '../components/CustomTabBar';
 
 export default function MainTabView() {
+  const [selectedTab, setSelectedTab] = useState(2); // Start with Dialpad (center)
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const handleTabPress = (tabIndex: number) => {
+    if (tabIndex === selectedTab) return;
+    
+    // Smooth fade transition like iOS
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 100,
+      useNativeDriver: true,
+    }).start(() => {
+      setSelectedTab(tabIndex);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
+    });
+  };
+
+  const renderTabContent = () => {
+    switch (selectedTab) {
+      case 0:
+        return <ContactsTabView />;
+      case 1:
+        return <HistoryTabView />;
+      case 2:
+        return <DialpadTabView />;
+      case 3:
+        return <VoicemailTabView />;
+      case 4:
+        return <SettingsTabView />;
+      default:
+        return <DialpadTabView />;
+    }
+  };
+
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: Colors.darkBackground,
-          borderTopColor: Colors.cardBackground,
-        },
-        tabBarActiveTintColor: Colors.brandPrimary,
-        tabBarInactiveTintColor: Colors.textSecondary,
-      }}
-    >
-      <Tab.Screen
-        name="Dialpad"
-        component={DialpadTabView}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="keypad" size={size} color={color} />
-          ),
-        }}
+    <View style={styles.container}>
+      <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
+        {renderTabContent()}
+      </Animated.View>
+      <CustomTabBar 
+        selectedTab={selectedTab} 
+        onTabPress={handleTabPress} 
       />
-      <Tab.Screen
-        name="History"
-        component={HistoryTabView}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Contacts"
-        component={ContactsTabView}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Voicemail"
-        component={VoicemailTabView}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="recording-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsTabView}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.appBackground,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+});

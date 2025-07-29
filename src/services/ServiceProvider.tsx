@@ -4,7 +4,10 @@ import { UserService } from './core/UserService';
 import { CallManager } from './managers/CallManager';
 import { CallLogService } from './managers/CallLogService';
 import { ContactsManager } from './managers/ContactsManager';
+import { ITwilioService } from './twilio/ITwilioService';
 import { TwilioService } from './twilio/TwilioService';
+import { MockTwilioService } from './twilio/MockTwilioService';
+import { appConfig } from '../config/appConfig';
 import { AudioManager } from './audio/AudioManager';
 import { CallRecordingService } from './backend/CallRecordingService';
 import { VoicemailService } from './backend/VoicemailService';
@@ -20,7 +23,7 @@ interface ServiceProviderValue {
   callRecordingService: CallRecordingService;
   voicemailService: VoicemailService;
   pushNotificationService: PushNotificationService;
-  twilioService: TwilioService;
+  twilioService: ITwilioService;
   isInitialized: boolean;
 }
 
@@ -58,7 +61,7 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
       const callRecordingService = new CallRecordingService();
       const voicemailService = new VoicemailService();
       const pushNotificationService = new PushNotificationService();
-      const twilioService = new TwilioService();
+      const twilioService = appConfig.useMockTwilio ? new MockTwilioService() : new TwilioService();
       const callManager = new CallManager();
 
       // Initialize services
@@ -87,6 +90,7 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
 
       // Initialize Twilio (in production, you'd get the token from your backend)
       await twilioService.initialize();
+      await twilioService.refreshAccessToken();
 
       setServices({
         userService,
@@ -112,7 +116,7 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
       const callRecordingService = new CallRecordingService();
       const voicemailService = new VoicemailService();
       const pushNotificationService = new PushNotificationService();
-      const twilioService = new TwilioService();
+      const twilioService = appConfig.useMockTwilio ? new MockTwilioService() : new TwilioService();
       const callManager = new CallManager();
 
       try {

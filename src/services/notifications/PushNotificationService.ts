@@ -19,8 +19,7 @@ export class PushNotificationService {
   private isInitialized = false;
 
   constructor() {
-    this.httpClient = new HTTPClient();
-    this.httpClient.setBaseURL(BACKEND_URL);
+    this.httpClient = new HTTPClient(BACKEND_URL);
   }
 
   async initialize(): Promise<void> {
@@ -32,15 +31,24 @@ export class PushNotificationService {
       // Configure notification handling
       await this.configureNotifications();
 
-      // Request permissions and get token
-      await this.requestPermissions();
-      await this.registerForPushNotifications();
+      // Request permissions
+      const hasPermissions = await this.requestPermissions();
+      
+      if (hasPermissions) {
+        // Try to register for push notifications, but don't fail if it doesn't work
+        try {
+          await this.registerForPushNotifications();
+        } catch (tokenError) {
+          console.warn('⚠️ Could not get push token, continuing without push notifications:', tokenError);
+        }
+      }
 
       this.isInitialized = true;
       console.log('✅ Push notifications initialized');
     } catch (error) {
       console.error('❌ Failed to initialize push notifications:', error);
-      throw error;
+      // Don't throw - just continue without push notifications
+      this.isInitialized = true;
     }
   }
 
@@ -116,23 +124,13 @@ export class PushNotificationService {
         return;
       }
 
-      // Get the Expo push token
-      const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: 'your-expo-project-id', // Replace with your Expo project ID
-      });
-
-      this.deviceToken = tokenData.data;
-      console.log('📱 Got Expo push token:', this.deviceToken);
-
-      // Also get the native device token for APNS/FCM
-      let nativeToken: string | undefined;
-      if (Platform.OS === 'ios') {
-        nativeToken = await Notifications.getDevicePushTokenAsync();
-      } else if (Platform.OS === 'android') {
-        nativeToken = await Notifications.getDevicePushTokenAsync();
-      }
-
-      console.log('📱 Got native push token:', nativeToken);
+      // For development, we'll skip getting push tokens since we don't have a real project ID
+      // In production, you would:
+      // 1. Set up an Expo project ID
+      // 2. Get the Expo push token: await Notifications.getExpoPushTokenAsync({ projectId: 'your-id' })
+      // 3. Get native tokens for APNS/FCM
+      console.log('⚠️ Skipping push token registration - no project ID configured');
+      console.log('📝 To enable push notifications: Set up Expo project ID in app.json');
     } catch (error) {
       console.error('❌ Failed to get push token:', error);
       throw error;

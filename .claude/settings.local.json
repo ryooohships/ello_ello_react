@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npx expo start:*)",
+      "Bash(npx expo export:*)",
+      "Bash(npm install:*)",
+      "Bash(find:*)",
+      "Bash(chmod:*)",
+      "Bash(npx eas build:*)",
+      "Bash(NODE_ENV=production eas build --platform ios --profile preview --local)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": []
+  }
+}
